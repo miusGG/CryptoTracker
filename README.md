@@ -1,4 +1,5 @@
 # CryptoTracker · 1.0
+RU readme. More in https://t.me/freecod1ng/128
 
 **Написан на Python 3.10+**: `aiogram 3` — Telegram-бот, `httpx` — запросы к CoinGecko, `asyncio` — фоновые задачи. Настройки и алерты хранятся в JSON. База данных и отдельный веб-сервер не нужны.
 
