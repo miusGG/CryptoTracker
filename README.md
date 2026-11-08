@@ -1,7 +1,10 @@
 # CryptoTracker · 1.0
-RU readme. More in https://t.me/freecod1ng/128
 
 **Написан на Python 3.10+**: `aiogram 3` — Telegram-бот, `httpx` — запросы к CoinGecko, `asyncio` — фоновые задачи. Настройки и алерты хранятся в JSON. База данных и отдельный веб-сервер не нужны.
+
+**Язык:** Русский · [English](README.en.md)
+
+[Пост о CryptoTracker в моём Telegram-канале](https://t.me/freecod1ng/128)
 
 ## Что это
 
@@ -265,15 +268,3 @@ tgbot/services/           карточки алертов и отправка с
 cfg_example.json          пример конфигурации без секретов
 req.txt                   зависимости
 ```
-
-## English quick start
-
-CryptoTracker is a Telegram cryptocurrency price alert bot written in Python 3.10+, using aiogram, httpx, asyncio and CoinGecko. Alerts and settings are stored in JSON. It supports background tracking, saved alerts, restart recovery, start/stop/delete by ID, bulk stop/delete, notes, and paginated alert lists. It does not trade or access wallets.
-
-1. Clone this repository and create a Python 3.10+ virtual environment.
-2. Run `.venv/bin/python -m pip install -r req.txt` (Windows: `.\.venv\Scripts\python.exe -m pip install -r req.txt`). No environment activation is required.
-3. Copy `cfg_example.json` to `cfg.json`.
-4. Set `BOT_TOKEN` from @BotFather and your numeric Telegram user ID in `ADMINS`. Set `language` to `en`, or select English in Settings. Leave `PASSWORD` empty to disable password-based registration.
-5. Start a chat with your bot, then run `.venv/bin/python bot.py` (Windows: `.\.venv\Scripts\python.exe bot.py`) and send `/menu`. New alerts are disabled by default; use **Start by ID** or enable autostart in Settings.
-
-Enabled alerts resume on restart. **End alert by ID** disables one alert without deleting it; **Stop all alerts** disables all saved alerts. Delete actions remove records permanently. Alerts keep running after a hit and notify again only after the price leaves and re-enters the matching condition. The bot must remain running to track prices. Terminal event names stay in English. Keep your real `cfg.json` private; it is ignored by Git.
