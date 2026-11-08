@@ -1,0 +1,278 @@
+# CryptoTracker · 1.0
+
+**Написан на Python 3.10+**: `aiogram 3` — Telegram-бот, `httpx` — запросы к CoinGecko, `asyncio` — фоновые задачи. Настройки и алерты хранятся в JSON. База данных и отдельный веб-сервер не нужны.
+
+## Что это
+
+Telegram-бот для отслеживания цен криптовалют через CoinGecko. Создавайте алерты, задавайте целевую цену и интервал проверки, получайте уведомления в Telegram. Интерфейс доступен на русском и английском.
+
+Бот **не торгует**, не подключается к кошелькам и не требует ключей биржи. Это трекер цен с уведомлениями.
+
+## Как это работает
+
+Вы запускаете приложение на компьютере или сервере и управляете им через своего Telegram-бота. Например, создаёте алерт «сообщить, когда Bitcoin будет ≥ 100 000 USD», выбираете проверку раз в 5 минут и добавляете заметку. Бот периодически запрашивает цену CoinGecko и отправляет сообщение, когда условие выполняется.
+
+Каждый алерт работает в фоне. После срабатывания он продолжает отслеживание, но повторно уведомляет только при новом пересечении порога. При перезапуске приложения включённые алерты восстанавливаются из `cfg.json`. Пока приложение выключено, цены не проверяются.
+
+## Возможности
+
+- Проверка цены по тикеру (`btc`) или CoinGecko ID (`bitcoin`).
+- Пошаговое создание алерта: уникальный ID, монета, цена, условие `≥` / `≤`, интервал в минутах и заметка.
+- Фоновое отслеживание нескольких монет без блокировки меню.
+- Сохранение алертов в `cfg.json`; восстановление включённых алертов после перезапуска.
+- Карточки алертов с перелистыванием: четыре на странице.
+- Запуск по ID без создания повторных циклов.
+- **End alert по ID**: остановка одного алерта с сохранением записи.
+- **Остановить все**: выключение всех алертов без удаления.
+- Удаление по ID и полная очистка списка алертов. Настройки бота сохраняются.
+- Выбор начального состояния новых алертов: выключены или запускаются сразу.
+- Выбор языка в **Настройки → Русский / English**. Язык общий для всех администраторов, сохраняется после перезапуска и применяется к новым сообщениям, кнопкам и уведомлениям.
+- Управление доступно администраторам. Можно включить регистрацию по паролю.
+
+## Быстрая установка
+
+Нужны **Python 3.10+**, Git и интернет с доступом к Telegram и CoinGecko. Проверено на Python 3.14. На Windows при установке Python включите **Add python.exe to PATH**. Зависимости перечислены в `req.txt`; `requirements.txt` ссылается на него.
+
+### 1. Скачайте и установите
+
+Скопируйте блок для своей системы в терминал. Окружение активировать не нужно: команды сразу используют нужный Python. Существующий `cfg.json` не перезаписывается.
+
+**Linux / macOS:**
+
+```bash
+git clone https://github.com/miusGG/CryptoTracker.git
+cd CryptoTracker
+python3 -m venv .venv
+.venv/bin/python -m pip install -r req.txt
+test -f cfg.json || cp cfg_example.json cfg.json
+```
+
+**Windows — PowerShell:**
+
+```powershell
+git clone https://github.com/miusGG/CryptoTracker.git
+cd CryptoTracker
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r req.txt
+if (!(Test-Path cfg.json)) { Copy-Item cfg_example.json cfg.json }
+```
+
+Без Git: на странице репозитория выберите **Code → Download ZIP**, распакуйте архив, откройте терминал в папке с `bot.py` и выполните блок своей системы, начиная с создания `.venv`.
+
+### 2. Заполните два поля
+
+Откройте `cfg.json` любым текстовым редактором:
+
+- `BOT_TOKEN`: создайте бота командой `/newbot` у **@BotFather** в Telegram и вставьте полученный токен вместо `PASTE_TELEGRAM_BOT_TOKEN_HERE`, сохранив кавычки.
+- `ADMINS`: замените `123456789` своим числовым Telegram user ID. Например, `[987654321]`. Нужен ID вашего аккаунта, а не `@username` или ID созданного бота.
+
+Остальные поля можно оставить как в примере: русский язык, USD, новые алерты выключены, вход по паролю отключён. Язык и автозапуск меняются через меню бота.
+
+### 3. Запустите
+
+Откройте своего бота в Telegram и нажмите **Start**. В терминале, из папки проекта, выполните:
+
+```bash
+# Linux / macOS
+.venv/bin/python bot.py
+```
+
+```powershell
+# Windows PowerShell
+.\.venv\Scripts\python.exe bot.py
+```
+
+Дождитесь `BOT_READY` в консоли и отправьте боту `/menu`. Создайте первый алерт; по умолчанию после создания его нужно включить через **Мои алерты → Запустить по ID**. Чтобы новые алерты запускались сразу, выберите это в **Настройках**.
+
+Для следующего запуска достаточно той же команды из шага 3. Оставляйте терминал открытым во время работы. Остановка — `Ctrl+C`.
+
+**Если установка не получилась:**
+
+- `python3` / `py` не найден: установите Python 3.10+ и откройте новый терминал. Если на Windows доступна только команда `python`, замените ею `py -3`.
+- На Ubuntu/Debian ошибка создания окружения с упоминанием `venv` или `ensurepip`: установите `sudo apt install python3-venv` и повторите создание `.venv`.
+- `ModuleNotFoundError`: повторите установку зависимостей командой из шага 1 и запускайте Python именно из `.venv`.
+- `CONFIG_MISSING` / `CONFIG_INVALID`: проверьте наличие `cfg.json` и два поля из шага 2; файл должен быть рядом с `bot.py`.
+- `BOT_FAILED stage=telegram_auth`: проверьте токен и доступ к Telegram. Не запускайте второй экземпляр с тем же токеном.
+
+## Настройки
+
+Пример `cfg_example.json` не содержит токенов и действующих алертов:
+
+```json
+{
+  "main": {
+    "BOT_TOKEN": "PASTE_TELEGRAM_BOT_TOKEN_HERE",
+    "PASSWORD": "",
+    "ADMINS": [123456789],
+    "currency": "USD",
+    "autostart": false,
+    "language": "ru"
+  },
+  "tasks": {}
+}
+```
+
+| Поле | Назначение |
+| --- | --- |
+| `BOT_TOKEN` | Токен вашего Telegram-бота от @BotFather. |
+| `PASSWORD` | Необязательный пароль: отправивший его пользователь получает права администратора. Пустая строка отключает регистрацию по паролю. |
+| `ADMINS` | Список Telegram user ID администраторов. Каждый получает уведомления и может управлять общим списком алертов. |
+| `currency` | Валюта цены CoinGecko, например `USD`, `EUR`, `BTC`. `USDT` для совместимости запрашивается как `USD`; это не биржевая котировка пары USDT. Изменение применяется после перезапуска. |
+| `autostart` | `false` / `0`: новые алерты выключены; `true` / `1`: сразу включены. Можно менять кнопками. |
+| `language` | `ru` или `en`. Можно менять кнопками. В старом конфиге без этого поля используется русский. |
+| `tasks` | Сохранённые алерты. Бот обновляет этот раздел сам. |
+
+Если доступ нужен только вам, оставьте `PASSWORD` пустым и укажите свой ID в `ADMINS`. Не публикуйте рабочий `cfg.json`: он исключён через `.gitignore`.
+
+## Как работают алерты
+
+1. Откройте **Создать алерт** и пройдите шесть шагов. Для однозначного выбора монеты предпочтителен CoinGecko ID: тикеры могут совпадать у нескольких монет.
+2. При выключенном автозапуске откройте **Мои алерты → Запустить по ID**.
+3. Первый запрос цены выполняется сразу, следующие — через заданный интервал. Дробные минуты разрешены: `0.5` = 30 секунд.
+4. Когда условие выполняется, приходит сообщение с текущей ценой, целевым условием, ID и вашей заметкой.
+5. Отслеживание продолжается. Повторное уведомление приходит после выхода цены из условия и нового входа в него; одинаковое состояние не вызывает сообщение на каждой проверке. После перезапуска условие оценивается заново.
+
+Если доставка в Telegram не удалась, бот повторяет попытку через 60 секунд, пока условие выполняется. При ограничении частоты отправки Telegram сам задаёт время ожидания. Получившим уведомление администраторам повтор не отправляется. Если администратор добавлен во время отслеживания, он получит уведомление при следующей проверке выполненного условия. История доставки хранится в памяти и сбрасывается после перезапуска.
+
+`is_running` — **сохранённое намерение отслеживать**, а не гарантия успешного ответа API. Значение `1` восстанавливает цикл при запуске бота; `0` оставляет алерт выключенным. Изменения флагов непосредственно в JSON подхватываются примерно раз в секунду.
+
+| Действие в «Мои алерты» | Результат |
+| --- | --- |
+| Запустить по ID | `is_running = 1`, один фоновый цикл для этого ID. |
+| End alert по ID | `is_running = 0` только у выбранного алерта, запись остаётся. |
+| Остановить все | `is_running = 0` у всех записей. |
+| Удалить по ID | Запись полностью удаляется, её цикл отменяется. |
+| Удалить все | `tasks` становится `{}`, циклы отменяются. |
+
+Остановка и удаление прерывают ожидание следующей проверки и незавершённый запрос. Уже отправленное сообщение из чата не исчезает. Кнопка **Удалить все** выполняет очистку сразу.
+
+Пример одной записи внутри `tasks` (не нужно добавлять вручную):
+
+```json
+"btc-watch": {
+  "is_symbol": 0,
+  "symbol": "bitcoin",
+  "price": 100000,
+  "is_above": 1,
+  "time": 5,
+  "is_running": 1,
+  "note": "Проверить движение цены"
+}
+```
+
+`is_symbol`: `1` — тикер, `0` — CoinGecko ID. `is_above`: `1` — цена ≥ цели, `0` — цена ≤ цели. `time` измеряется в минутах. ID должен быть уникальным. Заметка — до 500 символов.
+
+## Команды
+
+| Команда | Действие |
+| --- | --- |
+| `/start` | Приветствие или главное меню администратора. |
+| `/menu` | Главное меню. |
+| `/cancel` | Отмена текущего ввода и возврат в меню. |
+| `/price s btc` | Текущая цена по тикеру. |
+| `/price n bitcoin` | Текущая цена по CoinGecko ID. |
+
+После обновления кода откройте новое `/menu`: кнопки в уже отправленных сообщениях сами не перерисовываются.
+
+## Что выводится в терминал
+
+Логи идут в стандартный поток ошибок (`stderr`) в формате:
+
+```text
+дата время | уровень | модуль | СОБЫТИЕ параметры
+```
+
+Названия событий всегда на английском для удобного поиска, независимо от языка Telegram. Время — локальное время операционной системы. Пример с вымышленными значениями:
+
+```text
+2026-11-08 12:00:00 | INFO    | __main__ | BOT_STARTING version=1.0 python=3.14.0 config=/path/CryptoTracker/cfg.json
+2026-11-08 12:00:00 | INFO    | __main__ | TELEGRAM_CONNECTED bot_id=123456 username=@example_bot
+2026-11-08 12:00:00 | INFO    | __main__ | CONFIG_LOADED currency=USD language=ru autostart=0 admins=1 alerts=3
+2026-11-08 12:00:00 | INFO    | crypto | ALERT_STARTED id='btc-watch' coin='bitcoin' lookup=id condition=>= target=100000 currency=USD interval_min=5
+2026-11-08 12:00:00 | INFO    | crypto | ALERTS_RESTORED total=3 enabled=1 running=1 disabled=2 invalid=0
+2026-11-08 12:00:01 | INFO    | __main__ | BOT_READY polling=true language=ru admins=1; open Telegram /menu; Ctrl+C to stop
+2026-11-08 12:00:01 | INFO    | crypto | PRICE_FETCHED coin='bitcoin' lookup=ids currency=USD price=100100.0 elapsed_ms=240
+2026-11-08 12:00:01 | INFO    | crypto | PRICE_CHECK id='btc-watch' coin='bitcoin' price=100100.0 currency=USD condition=>= target=100000.0 condition_met=True interval_seconds=300.0
+2026-11-08 12:00:01 | INFO    | crypto | ALERT_TRIGGERED id='btc-watch' price=100100.0 target=100000.0 recipients=1 pending=1
+2026-11-08 12:00:01 | INFO    | tgbot.services.broadcaster | TELEGRAM_SENT user_id=123456789
+2026-11-08 12:00:01 | INFO    | crypto | ALERT_DELIVERY id='btc-watch' delivered=1 total=1 pending=0
+2026-11-08 12:01:00 | INFO    | crypto | ALERT_DISABLED id='btc-watch'
+```
+
+| Событие | Значение / что делать |
+| --- | --- |
+| `BOT_STARTING`, `BOT_READY` | Запуск и готовность принимать команды. |
+| `TELEGRAM_CONNECTED` | Токен принят Telegram; ID и имя подключённого бота. |
+| `CONFIG_LOADED` | Валюта, язык, автозапуск, число администраторов и сохранённых алертов. |
+| `ALERTS_RESTORED` | Сколько алертов сохранено, включено, запущено, выключено и не прошло проверку параметров. |
+| `ALERT_CREATED`, `ALERT_STARTED` | Создание записи и фактический запуск отслеживания. |
+| `PRICE_FETCHED` | Монета, поиск по тикеру/ID, валюта, цена и время ответа API в миллисекундах. Работает и для проверки цены через меню. |
+| `PRICE_CHECK` | ID алерта, монета, цена, валюта, знак сравнения, цель, результат и обычный интервал проверок. |
+| `ALERT_TRIGGERED`, `TELEGRAM_SENT` | Условие выполнено / сообщение доставлено в Telegram. |
+| `ALERT_DELIVERY`, `ALERT_DELIVERY_RETRY` | Сколько администраторов получило уведомление, скольким нужна повторная доставка и через сколько секунд. |
+| `ALERT_DISABLED`, `ALERTS_DISABLED` | Остановка одного / всех алертов. |
+| `ALERT_DELETED`, `ALERTS_CLEARED` | Удаление одной / всех записей. |
+| `BOT_STOPPING`, `WORKER_STOPPED`, `ALERT_SERVICE_CLOSED`, `BOT_STOPPED` | Завершение задач и бота; сохранённые флаги остаются для следующего запуска. |
+| `LANGUAGE_CHANGED`, `AUTOSTART_CHANGED`, `ADMIN_ADDED` | Изменение настроек и регистрация администратора. |
+| `CONFIG_MISSING` | Скопируйте `cfg_example.json` в `cfg.json`. |
+| `CONFIG_INVALID`, `CONFIG_INVALID_JSON` | Проверьте указанные поля, строку и столбец JSON. |
+| `CONFIG_SAVE_FAILED` | Проверьте права записи и свободное место. |
+| `CONFIG_RELOAD_FAILED` | Не удалось перечитать изменённый JSON; указаны ошибка и задержка повторной попытки. |
+| `ALERT_INVALID`, `ALERT_CHECK_FAILED` | Проверьте CoinGecko ID, цену, интервал и формат записи. |
+| `PRICE_HTTP_ERROR status=429` | CoinGecko ограничил частоту запросов; увеличьте интервалы. |
+| `PRICE_NETWORK_ERROR`, `ALERT_RETRY` | Сеть недоступна / повторная проверка через 60 секунд. |
+| `PRICE_UNAVAILABLE`, `PRICE_RESPONSE_INVALID` | CoinGecko не вернул цену нужной монеты/валюты или вернул некорректные данные. |
+| `TELEGRAM_FORBIDDEN` | Откройте чат с ботом, нажмите Start или разблокируйте его. |
+| `TELEGRAM_SEND_FAILED`, `TELEGRAM_BAD_REQUEST` | Ошибка доставки; проверьте связь и ID получателя. |
+| `TELEGRAM_RATE_LIMIT` | Telegram ограничил отправку; бот ждёт указанное число секунд и повторяет её. |
+| `NO_ADMINS`, `ALERT_NO_RECIPIENTS` | Пока некому отправлять уведомления. Заполните ADMINS или зарегистрируйтесь паролем. |
+| `BOT_FAILED`, `HANDLER_FAILED`, `WORKER_FAILED` | Ошибка с типом исключения, файлом, строкой и функцией. Для запуска указан этап, для обработчика — ID и тип события. |
+
+Например, `BOT_FAILED stage=telegram_auth error=TelegramUnauthorizedError` означает, что Telegram отклонил токен. `stage=restore_alerts` указывает на восстановление алертов, `stage=startup_notifications` — на отправку сообщения о запуске, `stage=polling` — на приём обновлений. `source=crypto.py:123 function=_run_alert` помогает найти место ошибки без вывода секретных данных.
+
+Уровни: `INFO` — обычная работа, `WARNING` — временная проблема или необходимость внимания, `ERROR` — действие не удалось. Токен, пароль, весь конфиг и текст заметки не выводятся в штатные логи. ID алертов, монеты и ID получателей выводятся.
+
+Для одновременного просмотра и записи логов:
+
+```bash
+# Linux / macOS
+.venv/bin/python bot.py 2>&1 | tee bot.log
+```
+
+```powershell
+# Windows PowerShell
+.\.venv\Scripts\python.exe bot.py 2>&1 | Tee-Object bot.log
+```
+
+## Ограничения
+
+- Проверки идут, пока работает `bot.py` и есть сеть. После закрытия терминала или выключения компьютера проверки прекращаются. Автозапуск ОС / systemd в проект не входит.
+- Запускайте один экземпляр бота с одним конфигом. Несколько процессов с общим JSON не поддерживаются.
+- Интервалы и число алертов влияют на лимиты CoinGecko; бесплатный API может временно отказывать. После ошибки проверка повторяется через 60 секунд.
+- Цена — данные CoinGecko, не поток биржевых сделок в реальном времени. Поле `exchange` из старого конфига не выбирает биржу.
+- Список алертов и язык общие для всех администраторов. Это личный/командный бот, а не изолированные аккаунты пользователей.
+
+## Структура
+
+```text
+bot.py                    запуск, polling, завершение и логи
+crypto.py                 CoinGecko, фоновые задачи, сохранение конфигурации
+tgbot/handlers/           команды и кнопки Telegram
+tgbot/keyboards/          клавиатуры
+tgbot/i18n.py             русский и английский тексты
+tgbot/services/           карточки алертов и отправка сообщений
+cfg_example.json          пример конфигурации без секретов
+req.txt                   зависимости
+```
+
+## English quick start
+
+CryptoTracker is a Telegram cryptocurrency price alert bot written in Python 3.10+, using aiogram, httpx, asyncio and CoinGecko. Alerts and settings are stored in JSON. It supports background tracking, saved alerts, restart recovery, start/stop/delete by ID, bulk stop/delete, notes, and paginated alert lists. It does not trade or access wallets.
+
+1. Clone this repository and create a Python 3.10+ virtual environment.
+2. Run `.venv/bin/python -m pip install -r req.txt` (Windows: `.\.venv\Scripts\python.exe -m pip install -r req.txt`). No environment activation is required.
+3. Copy `cfg_example.json` to `cfg.json`.
+4. Set `BOT_TOKEN` from @BotFather and your numeric Telegram user ID in `ADMINS`. Set `language` to `en`, or select English in Settings. Leave `PASSWORD` empty to disable password-based registration.
+5. Start a chat with your bot, then run `.venv/bin/python bot.py` (Windows: `.\.venv\Scripts\python.exe bot.py`) and send `/menu`. New alerts are disabled by default; use **Start by ID** or enable autostart in Settings.
+
+Enabled alerts resume on restart. **End alert by ID** disables one alert without deleting it; **Stop all alerts** disables all saved alerts. Delete actions remove records permanently. Alerts keep running after a hit and notify again only after the price leaves and re-enters the matching condition. The bot must remain running to track prices. Terminal event names stay in English. Keep your real `cfg.json` private; it is ignored by Git.

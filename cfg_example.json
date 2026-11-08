@@ -1,0 +1,11 @@
+{
+    "main": {
+        "BOT_TOKEN": "PASTE_TELEGRAM_BOT_TOKEN_HERE",
+        "PASSWORD": "",
+        "ADMINS": [123456789],
+        "currency": "USD",
+        "autostart": false,
+        "language": "ru"
+    },
+    "tasks": {}
+}

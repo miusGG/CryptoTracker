@@ -1,0 +1,24 @@
+# Local configuration and work journal
+/cfg.json
+/gptlog.md
+.env
+.env.*
+
+# Python and editor files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.idea/
+.vscode/
+.agents/
+.codex/
+.aws/
+*.log
+.DS_Store
+
+# Local legacy prototypes, unused by bot.py
+/crypto_passed.py
+/testers.py
+/texts.py
